@@ -1,1 +1,7 @@
-<Solution />
+<Solution>
+  <Project Path="Electronic.Api/Electronic.Api.csproj" />
+  <Project Path="Electronic.Application/Electronic.Application.csproj" />
+  <Project Path="Electronic.Domain/Electronic.Domain.csproj" />
+  <Project Path="Electronic.Infraestructure/Electronic.Infrastructure.csproj" />
+  <Project Path="Electronic.Web/Electronic.Web.csproj" />
+</Solution>
