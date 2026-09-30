@@ -1,6 +1,6 @@
-namespace Electronic.Domain.Products;
+namespace Electronic.Domain.Entities.Product;
 
-public class Product
+public class ProductModel
 {
     public string Sku { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
