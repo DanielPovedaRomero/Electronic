@@ -1,6 +1,6 @@
 ﻿using Electronic.Application.DTO;
 
-namespace Electronic.Application.Services
+namespace Electronic.Application.Services.Product
 {
     public interface IProductService
     {
