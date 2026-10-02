@@ -2,6 +2,6 @@
 {
     public static class Config
     {
-        public const string DBNameConnection = "ElectronicDb";
+        public const string DBNameConnection = "DBConnection";
     }
 }

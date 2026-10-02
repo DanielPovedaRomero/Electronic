@@ -8,7 +8,7 @@ namespace Electronic.Application.Services.Product
         Task<ApiResponse<IReadOnlyList<ProductDto>>> GetAll(CancellationToken cancellationToken);
         Task<ApiResponse<ProductDto>> GetBySku(string sku, CancellationToken cancellationToken);
         Task<ApiResponse<ProductDto>> Create(ProductDto product, CancellationToken cancellationToken);
-        Task<ApiResponse<ProductDto>> Update(string sku, ProductDto product, CancellationToken cancellationToken);
+        Task<ApiResponse<ProductDto>> Update(ProductDto product, CancellationToken cancellationToken);
         Task<ApiResponse<bool>> Delete(string sku, CancellationToken cancellationToken);
     }
 }
