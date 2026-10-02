@@ -56,7 +56,7 @@ namespace Electronic.Application.Services.Product
                     return ApiResponse<ProductDto>.Fail(HttpStatusCode.BadRequest, validationError);
 
                 if (await _productRepository.Exists(product.Sku, cancellationToken))
-                    ApiResponse<ProductDto>.Fail(HttpStatusCode.BadRequest, string.Format(Messages.ProductAlreadyExists, product.Sku));
+                    return ApiResponse<ProductDto>.Fail(HttpStatusCode.BadRequest, string.Format(Messages.ProductAlreadyExists, product.Sku));
 
                 await _productRepository.Add(product.ToModel(), cancellationToken);
                 return ApiResponse<ProductDto>.Success(product);
@@ -67,12 +67,12 @@ namespace Electronic.Application.Services.Product
             }
         }
 
-        public async Task<ApiResponse<ProductDto>> Update(string sku, ProductDto product, CancellationToken cancellationToken)
+        public async Task<ApiResponse<ProductDto>> Update(ProductDto product, CancellationToken cancellationToken)
         {
             try
             {
                 if (!await _productRepository.Exists(product.Sku, cancellationToken))
-                    ApiResponse<ProductDto>.Fail(HttpStatusCode.BadRequest, string.Format(Messages.ProductNotExists, product.Sku));
+                    return ApiResponse<ProductDto>.Fail(HttpStatusCode.BadRequest, string.Format(Messages.ProductNotExists, product.Sku));
 
                 var validationError = ProductValidators.Validate(product);
 
@@ -93,7 +93,7 @@ namespace Electronic.Application.Services.Product
             try
             {
                 if (!await _productRepository.Exists(sku, cancellationToken))
-                    ApiResponse<ProductDto>.Fail(HttpStatusCode.BadRequest, string.Format(Messages.ProductNotExists, sku));
+                     return ApiResponse<bool>.Fail(HttpStatusCode.BadRequest, string.Format(Messages.ProductNotExists, sku));
 
                 await _productRepository.Delete(sku, cancellationToken);
 
