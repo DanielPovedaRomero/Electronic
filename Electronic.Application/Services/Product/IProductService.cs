@@ -1,14 +1,14 @@
-﻿using Electronic.Application.DTO;
+﻿using Electronic.Application.Common.Responses;
+using Electronic.Application.DTO;
 
 namespace Electronic.Application.Services.Product
 {
     public interface IProductService
     {
-        Task<IReadOnlyList<ProductDto>> GetAll(CancellationToken cancellationToken);
-        Task<ProductDto> GetBySku(string sku, CancellationToken cancellationToken);
-        Task<ProductDto> Create(ProductDto product, CancellationToken cancellationToken);
-        Task<ProductDto> Update(string sku, ProductDto product, CancellationToken cancellationToken);
-        Task<ProductDto> AdjustStock(string sku, int quantity, CancellationToken cancellationToken);
-        Task Delete(string sku, CancellationToken cancellationToken);
+        Task<ApiResponse<IReadOnlyList<ProductDto>>> GetAll(CancellationToken cancellationToken);
+        Task<ApiResponse<ProductDto>> GetBySku(string sku, CancellationToken cancellationToken);
+        Task<ApiResponse<ProductDto>> Create(ProductDto product, CancellationToken cancellationToken);
+        Task<ApiResponse<ProductDto>> Update(string sku, ProductDto product, CancellationToken cancellationToken);
+        Task<ApiResponse<bool>> Delete(string sku, CancellationToken cancellationToken);
     }
 }
