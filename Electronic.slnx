@@ -1,1 +1,10 @@
-<Solution />
+<Solution>
+  <Folder Name="/Tests/">
+    <Project Path="Electronic.Application.Tests/Electronic.Application.Tests.csproj" Id="feb7ea06-2390-4a7e-9ac5-510186b8961a" />
+  </Folder>
+  <Project Path="Electronic.Api/Electronic.Api.csproj" />
+  <Project Path="Electronic.Application/Electronic.Application.csproj" />
+  <Project Path="Electronic.Domain/Electronic.Domain.csproj" />
+  <Project Path="Electronic.Infraestructure/Electronic.Infrastructure.csproj" />
+  <Project Path="Electronic.Web/Electronic.Web.csproj" />
+</Solution>
