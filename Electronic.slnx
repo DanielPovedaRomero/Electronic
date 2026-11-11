@@ -6,5 +6,6 @@
   <Project Path="Electronic.Application/Electronic.Application.csproj" />
   <Project Path="Electronic.Domain/Electronic.Domain.csproj" />
   <Project Path="Electronic.Infraestructure/Electronic.Infrastructure.csproj" />
+  <Project Path="Electronic.Mcp/Electronic.Mcp.csproj" Id="2410462d-f4ce-416a-85de-48c979c35193" />
   <Project Path="Electronic.Web/Electronic.Web.csproj" />
 </Solution>
