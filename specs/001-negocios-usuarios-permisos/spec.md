@@ -32,6 +32,19 @@ cliente final, cobro de mensualidades e inicio de sesión con redes sociales."
 - Q: ¿Marcar Editar o Crear marca automáticamente Ver del mismo módulo? → A: Sí. Desmarcar Ver
   desmarca las demás acciones de ese módulo.
 
+### Session 2026-11-11
+
+- Q: ¿Cómo recibe el rol de administración de cada negocio los permisos que agreguen los módulos
+  futuros? → A: Con una bandera "acceso total" en el rol, que solo el Super Administrador marca.
+  Esos roles reciben automáticamente todo permiso nuevo, y el rol sugerido Administrador viene
+  con la bandera.
+- Q: Si una persona tiene el mismo correo en varios negocios, ¿qué se bloquea tras los intentos
+  fallidos? → A: Los intentos se cuentan por correo en toda la plataforma. Al llegar al límite se
+  bloquean todas las cuentas con ese correo.
+- Q: ¿Cuánto dura el enlace de invitación de un usuario nuevo y qué pasa si vence? → A: Vence a
+  las 72 horas (configurable). El administrador puede reenviarlo, el enlace anterior deja de
+  servir, y el usuario queda "pendiente" hasta definir su contraseña.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Super Administrador da de alta un negocio listo para operar (Priority: P1)
@@ -144,8 +157,8 @@ permisos son la suma de ambos roles.
 **Acceptance Scenarios**:
 
 1. **Given** un administrador del negocio, **When** registra un usuario con nombre, correo,
-   teléfono y al menos un rol, **Then** el usuario queda activo en su negocio y recibe un correo
-   para definir su contraseña.
+   teléfono y al menos un rol, **Then** el usuario queda "pendiente" en su negocio y recibe un
+   correo para definir su contraseña. Al definirla, pasa a activo.
 2. **Given** un correo que ya usa otro usuario del mismo negocio, **When** se intenta registrar
    un usuario con ese correo, **Then** el sistema lo rechaza.
 3. **Given** un usuario activo, **When** el administrador lo desactiva, **Then** el usuario pierde
@@ -208,6 +221,9 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
   solo es único dentro de cada negocio. Cada cuenta tiene su propia contraseña. Al iniciar
   sesión, si el correo y la contraseña coinciden con cuentas activas de varios negocios activos,
   la persona elige el negocio. Si coinciden con una sola, entra directamente.
+- **Bloqueo con correo en varios negocios**: los intentos fallidos suman al mismo contador
+  aunque la persona quisiera entrar a negocios distintos. Al bloquearse, quedan bloqueadas todas
+  sus cuentas con ese correo hasta que termina el tiempo de bloqueo.
 - **Recuperación con correo en varios negocios**: el correo de recuperación indica a qué negocio
   pertenece cada enlace, y cada enlace cambia solo la contraseña de esa cuenta.
 - **Desactivación con sesión abierta**: si se desactiva un usuario, un rol o un negocio mientras
@@ -218,6 +234,8 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
   correo válido, para no revelar qué cuentas existen.
 - **Enlace de recuperación inválido**: un enlace vencido o ya usado muestra un aviso y ofrece
   solicitar otro.
+- **Invitación vencida o no recibida**: el usuario sigue "pendiente" y ve un aviso que le pide
+  contactar a su administrador, quien reenvía la invitación.
 - **Edición simultánea**: si dos administradores editan el mismo rol o usuario a la vez, el
   segundo en guardar recibe un aviso de conflicto en lugar de sobrescribir los cambios del primero.
 - **Escalada de privilegios**: si un usuario intenta asignar un rol con permisos que no tiene,
@@ -259,8 +277,13 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
 - **FR-008a**: Un usuario solo MUST poder asignar a otros usuarios roles cuyos permisos estén
   todos incluidos en sus propios permisos efectivos. Ningún usuario MUST poder agregar ni quitar
   sus propios roles. El Super Administrador no tiene esta restricción.
-- **FR-009**: Al crear un usuario, el sistema MUST enviarle un correo con un enlace de un solo
-  uso para definir su contraseña. Nadie más conoce ni define su contraseña.
+- **FR-009**: Al crear un usuario, el sistema MUST enviarle un correo con un enlace de invitación
+  para definir su contraseña. Nadie más conoce ni define su contraseña.
+  - El enlace es de un solo uso y vence a las 72 horas (configurable).
+  - Hasta que el usuario define su contraseña, aparece como "pendiente" y no puede iniciar
+    sesión.
+  - El administrador MUST poder reenviar la invitación. Al reenviarla, el enlace anterior deja de
+    servir.
 - **FR-010**: El sistema MUST impedir que un negocio quede sin al menos un usuario activo con
   permiso para administrar usuarios y roles.
 
@@ -273,9 +296,14 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
   cierran sus demás sesiones.
 - **FR-013**: Los usuarios MUST poder recuperar su contraseña mediante un enlace enviado por
   correo, de un solo uso y que vence a los 60 minutos.
-- **FR-014**: Tras un número de intentos fallidos consecutivos (por defecto 5), el sistema MUST
-  bloquear la cuenta durante un tiempo configurable (por defecto 15 minutos). Los mensajes de
-  error de inicio de sesión MUST ser genéricos.
+- **FR-014**: Los intentos fallidos MUST contarse por correo en toda la plataforma, no por
+  cuenta.
+  - Un intento es fallido cuando la contraseña no coincide con ninguna cuenta activa de ese
+    correo.
+  - Tras un número de intentos fallidos consecutivos (por defecto 5), el sistema MUST bloquear
+    todas las cuentas con ese correo durante un tiempo configurable (por defecto 15 minutos).
+  - Un inicio de sesión exitoso reinicia el contador.
+  - Los mensajes de error de inicio de sesión MUST ser genéricos.
 - **FR-015**: Las contraseñas MUST tener al menos 8 caracteres e incluir letras y números, y
   nunca se guardan ni se muestran en forma legible.
 - **FR-016**: Las sesiones MUST cerrarse tras un período de inactividad configurable (por
@@ -289,6 +317,12 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
   depende del nombre de un rol, solo de sus permisos.
 - **FR-019**: MUST existir un catálogo global de permisos con la forma Módulo.Acción, definido
   por la plataforma y común a todos los negocios. Los negocios no lo modifican.
+- **FR-019a**: Un rol MUST poder tener la bandera "acceso total".
+  - Solo el Super Administrador MUST poder marcar o desmarcar la bandera.
+  - Un rol con la bandera tiene todos los permisos del catálogo, incluidos los que se agreguen
+    después, sin que nadie tenga que asignarlos.
+  - Su matriz se muestra completamente marcada y no se puede editar.
+  - El rol sugerido Administrador se crea con la bandera.
 - **FR-020**: La asignación de permisos a un rol MUST hacerse en una matriz de módulos (filas)
   por acciones (columnas), marcando o desmarcando casillas. Solo se muestran las combinaciones
   que existen en el catálogo.
@@ -350,11 +384,12 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
 - **FR-032**: Ningún negocio, usuario ni rol se elimina físicamente: solo se desactiva.
 - **FR-033**: La interfaz y todos los mensajes MUST estar en español.
 - **FR-034**: Los valores configurables de este módulo (intentos antes del bloqueo, duración del
-  bloqueo, vencimiento del enlace de recuperación, vencimiento del código del segundo factor,
-  inactividad de sesión, roles y permisos sugeridos) MUST administrarse como configuración
+  bloqueo, vencimiento del enlace de recuperación, vencimiento del enlace de invitación,
+  vencimiento del código del segundo factor, inactividad de sesión, roles y permisos sugeridos)
+  MUST administrarse como configuración
   almacenada, no como valores fijos.
-- **FR-035**: Los valores de seguridad (intentos y duración del bloqueo, vencimiento del enlace
-  de recuperación y del código del segundo factor, inactividad de sesión) MUST ser globales para
+- **FR-035**: Los valores de seguridad (intentos y duración del bloqueo, vencimiento de los
+  enlaces de recuperación e invitación y del código del segundo factor, inactividad de sesión) MUST ser globales para
   toda la plataforma y ajustables solo por el Super Administrador, desde una pantalla de
   configuración de plataforma. Cada cambio queda en la auditoría.
 
@@ -364,11 +399,12 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
   de contacto, horario, logo, colores, texto de agradecimiento, texto de condiciones, días de
   resguardo y estado. Todo dato operativo de los módulos siguientes pertenece a un negocio.
 - **Usuario**: persona que trabaja en un negocio. Atributos: nombre, correo (único en el negocio),
-  teléfono, estado y datos de seguridad (bloqueo, intentos fallidos). Pertenece a un negocio y
-  tiene uno o varios roles.
+  teléfono y estado (pendiente, activo o inactivo). Pertenece a un negocio y tiene uno o varios roles.
+- **Control de intentos por correo**: contador de intentos fallidos y bloqueo vigente para cada
+  correo, común a todas las cuentas con ese correo en cualquier negocio.
 - **Super Administrador**: cuenta de plataforma, sin negocio, que administra todos los negocios.
 - **Rol**: agrupación de permisos con nombre y descripción, propia de un negocio. Puede estar
-  activo o inactivo.
+  activo o inactivo, y puede tener la bandera "acceso total" (FR-019a).
 - **Permiso**: elemento del catálogo global, identificado por Módulo y Acción
   (por ejemplo, Ordenes.Crear). Se asigna a roles.
 - **Asignación de rol / Asignación de permiso**: relación usuario↔rol y rol↔permiso.
@@ -404,8 +440,8 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
 - Los permisos iniciales del catálogo cubren los módulos de este alcance (Negocios, Usuarios,
   Roles, Auditoría). Cada módulo futuro agrega sus propios permisos al catálogo cuando se
   construye.
-- Los roles sugeridos llegan con permisos sugeridos: Administrador con todos los permisos del
-  negocio; Recepción, Técnico y Bodega inicialmente sin permisos administrativos, hasta que
+- Los roles sugeridos llegan con permisos sugeridos: Administrador con la bandera "acceso
+  total"; Recepción, Técnico y Bodega inicialmente sin permisos administrativos, hasta que
   existan sus módulos.
 - El envío de correos se hace mediante un servicio de correo disponible para la plataforma.
 - Los registros de auditoría se conservan indefinidamente en esta versión.
