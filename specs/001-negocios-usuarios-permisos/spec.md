@@ -44,6 +44,12 @@ cliente final, cobro de mensualidades e inicio de sesión con redes sociales."
 - Q: ¿Cuánto dura el enlace de invitación de un usuario nuevo y qué pasa si vence? → A: Vence a
   las 72 horas (configurable). El administrador puede reenviarlo, el enlace anterior deja de
   servir, y el usuario queda "pendiente" hasta definir su contraseña.
+- Q: ¿En qué formato se guarda el logo del negocio? → A: En su formato original, PNG o JPEG,
+  sin conversión. No se usan paquetes de pago ni con licencia restrictiva. (Decidido durante
+  /speckit-plan.)
+- Q: ¿Las plantillas de roles sugeridos y de correos se pueden editar desde el sistema en este
+  módulo? → A: Sí, las edita el Super Administrador. Es la funcionalidad de menor prioridad del
+  módulo. (Decidido durante /speckit-plan.)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -215,6 +221,28 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
 
 ---
 
+### User Story 7 - Super Administrador ajusta las plantillas de la plataforma (Priority: P3)
+
+El Super Administrador edita los roles sugeridos que reciben los negocios nuevos y los textos de
+los correos de invitación, recuperación y segundo factor.
+
+**Why this priority**: los valores iniciales cubren la operación; editarlos es un ajuste que
+puede llegar al final del módulo.
+
+**Independent Test**: se cambia el asunto del correo de invitación y se agrega un rol sugerido.
+Se comprueba que la siguiente invitación usa el asunto nuevo y que el siguiente negocio creado
+recibe el rol nuevo, sin afectar a los negocios existentes.
+
+**Acceptance Scenarios**:
+
+1. **Given** el Super Administrador en la plataforma, **When** cambia el texto del correo de
+   recuperación, **Then** los siguientes correos de recuperación usan el texto nuevo.
+2. **Given** un negocio ya existente, **When** el Super Administrador modifica la plantilla de
+   roles sugeridos, **Then** los roles de ese negocio no cambian, y solo los negocios creados
+   después reciben la plantilla nueva.
+
+---
+
 ### Edge Cases
 
 - **Correo en varios negocios**: el mismo correo puede existir en dos negocios distintos, porque
@@ -243,7 +271,8 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
   el intento en la auditoría.
 - **Roles sugeridos editados**: si el negocio renombra o elimina sus roles sugeridos, no se
   vuelven a crear ni afectan a otros negocios.
-- **Logo inválido**: un logo con tipo o tamaño no permitido se rechaza con un mensaje claro.
+- **Logo inválido**: un archivo que no sea PNG ni JPEG (aunque tenga esa extensión), o que pese
+  más de 2 MB, se rechaza con un mensaje claro.
 - **Último Super Administrador**: no se puede desactivar el último Super Administrador activo de
   la plataforma.
 
@@ -386,12 +415,19 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
 - **FR-034**: Los valores configurables de este módulo (intentos antes del bloqueo, duración del
   bloqueo, vencimiento del enlace de recuperación, vencimiento del enlace de invitación,
   vencimiento del código del segundo factor, inactividad de sesión, roles y permisos sugeridos)
-  MUST administrarse como configuración
-  almacenada, no como valores fijos.
+  MUST administrarse como configuración almacenada, no como valores fijos.
 - **FR-035**: Los valores de seguridad (intentos y duración del bloqueo, vencimiento de los
-  enlaces de recuperación e invitación y del código del segundo factor, inactividad de sesión) MUST ser globales para
-  toda la plataforma y ajustables solo por el Super Administrador, desde una pantalla de
-  configuración de plataforma. Cada cambio queda en la auditoría.
+  enlaces de recuperación e invitación y del código del segundo factor, inactividad de sesión)
+  MUST ser globales para toda la plataforma y ajustables solo por el Super Administrador, desde
+  una pantalla de configuración de plataforma. Cada cambio queda en la auditoría.
+- **FR-036**: El Super Administrador MUST poder editar, desde la plataforma, la plantilla de
+  roles sugeridos (nombres, descripciones, permisos y bandera "acceso total") y las plantillas de
+  los correos de invitación, recuperación y segundo factor (asunto y texto).
+  - Los cambios a la plantilla de roles solo afectan a los negocios que se creen después.
+  - Cada cambio queda en la auditoría.
+  - Hasta que exista esta pantalla, rigen los valores iniciales.
+- **FR-037**: El logo MUST ser una imagen PNG o JPEG de hasta 2 MB. Se guarda en su formato
+  original, sin conversión. El sistema verifica el tipo real del archivo, no solo su extensión.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -445,8 +481,7 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
   existan sus módulos.
 - El envío de correos se hace mediante un servicio de correo disponible para la plataforma.
 - Los registros de auditoría se conservan indefinidamente en esta versión.
-- Los colores del negocio son un color principal y uno secundario. El logo admite formatos de
-  imagen comunes, con tamaño máximo de 2 MB.
+- Los colores del negocio son un color principal y uno secundario. El logo sigue FR-037.
 - "Días de resguardo" es el número de días que el taller guarda un equipo sin reclamar. En este
   módulo solo se registra; su uso pertenece al módulo de órdenes.
 - La verificación en dos pasos es solo para el Super Administrador (FR-027a). Los usuarios de
