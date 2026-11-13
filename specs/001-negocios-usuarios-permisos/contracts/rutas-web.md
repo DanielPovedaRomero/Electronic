@@ -38,6 +38,7 @@ Pantallas renderizadas en el servidor.
 | GET/POST | `/plataforma/configuracion` | Plataforma | Valores de seguridad | FR-035 |
 | GET/POST | `/plataforma/plantillas-rol[/{id}]` | Plataforma | Roles sugeridos y sus permisos (P3) | FR-034 |
 | GET/POST | `/plataforma/plantillas-correo[/{id}]` | Plataforma | Asunto y cuerpo de los correos (P3) | Principio IX |
+| GET/POST | `/plataforma/catalogo-permisos[/modulos/{id}\|/permisos/{id}]` | Plataforma | Nombre, descripción, orden y estado de módulos, acciones y permisos. Códigos de solo lectura (P3) | FR-038 |
 | GET/POST | `/plataforma/super-administradores[/crear]`, `POST .../{id}/estado` | Plataforma | Altas y estado; nunca el último activo | FR-027 |
 | POST | `/plataforma/roles/{id}/acceso-total` | Plataforma o soporte | Marca o desmarca la bandera | FR-019a |
 | GET | `/plataforma/auditoria` | Plataforma | Auditoría de todos los negocios | FR-030 |

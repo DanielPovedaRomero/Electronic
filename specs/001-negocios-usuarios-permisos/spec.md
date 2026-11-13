@@ -51,6 +51,16 @@ cliente final, cobro de mensualidades e inicio de sesión con redes sociales."
   módulo? → A: Sí, las edita el Super Administrador. Es la funcionalidad de menor prioridad del
   módulo. (Decidido durante /speckit-plan.)
 
+### Session 2026-11-12
+
+Decisiones tomadas durante /speckit-analyze:
+
+- Q: ¿El catálogo de permisos es administrable desde el sistema? → A: Sí. El Super
+  Administrador edita nombres, descripciones y orden, y activa o desactiva módulos y permisos.
+  Los códigos son fijos (FR-038).
+- Q: ¿Con qué permisos se crean los roles sugeridos Recepción, Técnico y Bodega? → A: Sin
+  permisos. Los módulos futuros se los agregan.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Super Administrador da de alta un negocio listo para operar (Priority: P1)
@@ -157,8 +167,9 @@ de su negocio y les asigna uno o varios roles.
 **Why this priority**: es necesario para incorporar al personal del taller, pero el
 administrador inicial basta para empezar.
 
-**Independent Test**: se crea un usuario con los roles Recepción y Técnico y se verifica que sus
-permisos son la suma de ambos roles.
+**Independent Test**: se crea un usuario con dos roles que tienen permisos distintos (por
+ejemplo, uno con `Usuarios.Ver` y otro con `Roles.Ver`) y se verifica que sus permisos son la
+suma de ambos roles.
 
 **Acceptance Scenarios**:
 
@@ -223,8 +234,9 @@ quién hizo el cambio, cuándo, el teléfono anterior y el nuevo.
 
 ### User Story 7 - Super Administrador ajusta las plantillas de la plataforma (Priority: P3)
 
-El Super Administrador edita los roles sugeridos que reciben los negocios nuevos y los textos de
-los correos de invitación, recuperación y segundo factor.
+El Super Administrador edita los roles sugeridos que reciben los negocios nuevos, los textos de
+los correos de invitación, recuperación y segundo factor, y los nombres y el estado de los
+permisos del catálogo global.
 
 **Why this priority**: los valores iniciales cubren la operación; editarlos es un ajuste que
 puede llegar al final del módulo.
@@ -240,6 +252,9 @@ recibe el rol nuevo, sin afectar a los negocios existentes.
 2. **Given** un negocio ya existente, **When** el Super Administrador modifica la plantilla de
    roles sugeridos, **Then** los roles de ese negocio no cambian, y solo los negocios creados
    después reciben la plantilla nueva.
+3. **Given** el catálogo de permisos, **When** el Super Administrador cambia el nombre visible
+   de un permiso o desactiva uno, **Then** la matriz de todos los negocios muestra el nombre
+   nuevo, y el permiso desactivado deja de aparecer y de sumar en la siguiente acción.
 
 ---
 
@@ -428,6 +443,15 @@ recibe el rol nuevo, sin afectar a los negocios existentes.
   - Hasta que exista esta pantalla, rigen los valores iniciales.
 - **FR-037**: El logo MUST ser una imagen PNG o JPEG de hasta 2 MB. Se guarda en su formato
   original, sin conversión. El sistema verifica el tipo real del archivo, no solo su extensión.
+- **FR-038**: El Super Administrador MUST poder editar el catálogo global de permisos.
+  - Puede cambiar el nombre, la descripción y el orden de módulos, acciones y permisos.
+  - Puede activar o desactivar módulos y permisos. Lo inactivo no aparece en la matriz ni suma
+    permisos efectivos, ni siquiera con "acceso total".
+  - Los códigos `Módulo.Acción` no se pueden cambiar.
+  - Los permisos nuevos solo los agrega cada módulo al construirse.
+  - No se puede desactivar el permiso de consulta (Ver) de un módulo con otras acciones activas,
+    ni un permiso necesario para administrar usuarios y roles (FR-010).
+  - Cada cambio queda en la auditoría.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -473,12 +497,13 @@ recibe el rol nuevo, sin afectar a los negocios existentes.
 ## Assumptions
 
 - Al inicio hay un solo negocio, pero el sistema funciona igual con varios desde el primer día.
-- Los permisos iniciales del catálogo cubren los módulos de este alcance (Negocios, Usuarios,
-  Roles, Auditoría). Cada módulo futuro agrega sus propios permisos al catálogo cuando se
-  construye.
-- Los roles sugeridos llegan con permisos sugeridos: Administrador con la bandera "acceso
-  total"; Recepción, Técnico y Bodega inicialmente sin permisos administrativos, hasta que
-  existan sus módulos.
+- Los permisos iniciales del catálogo cubren los módulos Usuarios, Roles y Auditoría. La
+  gestión de negocios, la configuración y las plantillas son exclusivas del Super Administrador
+  y no forman parte del catálogo. Cada módulo futuro agrega sus propios permisos al catálogo
+  cuando se construye.
+- Los roles sugeridos son Administrador, con la bandera "acceso total", y Recepción, Técnico y
+  Bodega **sin permisos**. Los módulos futuros les agregan permisos en sus datos iniciales.
+  Mientras tanto, un usuario con solo esos roles entra y ve únicamente su perfil.
 - El envío de correos se hace mediante un servicio de correo disponible para la plataforma.
 - Los registros de auditoría se conservan indefinidamente en esta versión.
 - Los colores del negocio son un color principal y uno secundario. El logo sigue FR-037.
