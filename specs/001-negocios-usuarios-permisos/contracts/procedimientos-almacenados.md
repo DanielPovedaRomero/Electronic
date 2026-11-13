@@ -12,6 +12,13 @@ Es el contrato entre los repositorios de Infrastructure y la base de datos.
   - `@P` = `@Pagina INT, @TamanoPagina INT`;
   - `TVP` = `dbo.TipoListaIds`.
 - **Listados**: devuelven `TotalRegistros` con `COUNT(*) OVER()`.
+- **Concurrencia en todo UPDATE** (constitución V, ver [data-model.md](../data-model.md#convenciones-comunes)):
+  - las actualizaciones de usuario reciben `@RV`;
+  - las de sistema (`usp_Sesiones_Validar`, `usp_Autenticacion_RegistrarFallo` y
+    `_RegistrarExito`, `usp_Tokens_Consumir`) leen la `RowVersion` con `UPDLOCK, HOLDLOCK` y la
+    validan en el `UPDATE`.
+- **Columnas de registro**: todo `INSERT` y `UPDATE` llena las columnas de creación y
+  modificación desde `SESSION_CONTEXT`.
 
 ## Autenticación (ámbito `Autenticacion`)
 
@@ -44,6 +51,9 @@ Es el contrato entre los repositorios de Infrastructure y la base de datos.
 | usp_PlantillasRol_Listar / _Obtener / _Guardar | @Id, datos, @Permisos TVP, @RV | |
 | usp_PlantillasCorreo_Listar / _Obtener / _Actualizar | @Codigo, @Asunto, @CuerpoHtml, @RV | |
 | usp_SuperAdministradores_Listar / _Crear / _CambiarEstado | | 50006 al desactivar el último |
+| usp_CatalogoPermisos_Listar | — | Módulos, acciones y permisos con estado y RowVersion (incluye inactivos) |
+| usp_Modulos_Actualizar / usp_Acciones_Actualizar / usp_Permisos_Actualizar | @Id, @Nombre, @Descripcion, @Orden, @RV | No modifican Codigo, EsConsulta ni EsAdministracion (FR-038) |
+| usp_Modulos_CambiarEstado / usp_Permisos_CambiarEstado | @Id, @Activo, @RV | 50008 si se desactiva la consulta con otras acciones activas o un permiso `EsAdministracion` |
 | usp_Roles_CambiarAccesoTotal | @N, @Id, @EsAccesoTotal, @RV | Solo ámbito Plataforma o soporte |
 
 ## Negocio (ámbito `Negocio`, siempre con `@NegocioId`)
@@ -85,3 +95,4 @@ Números reservados para `THROW`. Los repositorios los traducen (ver
 | 50005 | Matriz inválida: acción sin su consulta (FR-020a) | `ReglaNegocioException` | 400 |
 | 50006 | Se desactivaría el último Super Administrador | `ReglaNegocioException` | 400 |
 | 50007 | Recurso inexistente o de otro negocio | `ReglaNegocioException` | 404 |
+| 50008 | Desactivación de permiso no permitida (consulta con acciones activas, o permiso de administración) | `ReglaNegocioException` | 400 |

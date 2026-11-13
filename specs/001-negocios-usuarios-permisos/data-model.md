@@ -6,11 +6,22 @@
 
 - **Claves**: `Id INT IDENTITY` (`BIGINT` en `Auditoria`).
 - **Fechas**: todas en UTC (`DATETIME2(0)`, sufijo `Utc`).
-- **Columnas de registro**: toda tabla de entidad tiene `CreadoPorId`, `CreadoPorTipo CHAR(1)`,
-  `CreadoEnUtc`, `ModificadoPorId`, `ModificadoPorTipo` y `ModificadoEnUtc`. El tipo de autor
-  es `U` (usuario), `S` (Super Administrador) o `A` (anónimo).
-- **Concurrencia**: toda tabla de entidad tiene `RowVersion ROWVERSION`. Los
-  `usp_*_Actualizar` reciben `@RowVersion` y la validan en el `WHERE`.
+- **Columnas de registro**: **todas las tablas** de este modelo tienen `CreadoPorId`,
+  `CreadoPorTipo CHAR(1)`, `CreadoEnUtc`, `ModificadoPorId NULL`, `ModificadoPorTipo NULL` y
+  `ModificadoEnUtc NULL`. Esto incluye `Auditoria`, `Sesiones`, `TokensSeguridad`,
+  `ControlIntentos`, `RolPermisos`, `UsuarioRoles`, los catálogos y las plantillas (constitución
+  V). El tipo de autor es `U` (usuario), `S` (Super Administrador) o `A` (anónimo o sistema).
+  En `Auditoria`, que es de solo inserción, las columnas de modificación siempre quedan NULL.
+- **Concurrencia**: **todas las tablas** tienen `RowVersion ROWVERSION`, y todo `UPDATE` la
+  valida en su `WHERE`:
+  - **Actualizaciones de usuario** (`usp_*_Actualizar`, `_CambiarEstado`, ...): reciben
+    `@RowVersion` leída por la pantalla. Si cambió, `THROW 50001`.
+  - **Actualizaciones de sistema** (última actividad de la sesión, contador de intentos, consumo
+    de token): el procedimiento lee la `RowVersion` con `WITH (UPDLOCK, HOLDLOCK)` en su propia
+    transacción y la valida en el `UPDATE`. Así nunca sobrescribe a ciegas, y el bloqueo evita
+    conflictos falsos entre solicitudes simultáneas.
+  - **Relaciones** (`RolPermisos`, `UsuarioRoles`): se reemplazan como conjunto validando la
+    `RowVersion` del rol o del usuario padre.
 - **Borrado**: no hay borrado físico de entidades, solo `Activo BIT`. Las filas de relación
   (`RolPermisos`, `UsuarioRoles`) se reemplazan como conjunto dentro de una transacción
   auditada.
@@ -59,15 +70,28 @@ constitución.
 
 No se puede desactivar el último Super Administrador activo (error 50006).
 
-### Catálogo de permisos (global, sembrado)
+### Catálogo de permisos (global, sembrado, editable por el Super Administrador)
 
 | Tabla | Campos | Reglas |
 |---|---|---|
-| Modulos | Id, Codigo (único), Nombre, Orden | |
-| Acciones | Id, Codigo (único), Nombre, Orden, **EsConsulta** BIT | Exactamente una acción de consulta en el catálogo (Ver) |
-| Permisos | Id, ModuloId, AccionId, Codigo (`Modulo.Accion`, único), Descripcion, **EsAdministracion** BIT | UNIQUE(ModuloId, AccionId) |
+| Modulos | Id, Codigo (único), `Nombre NVARCHAR(100)`, `Descripcion NVARCHAR(500)`, Orden, Activo | |
+| Acciones | Id, Codigo (único), `Nombre NVARCHAR(100)`, Orden, **EsConsulta** BIT, Activo | Exactamente una acción de consulta en el catálogo (Ver) |
+| Permisos | Id, ModuloId, AccionId, Codigo (`Modulo.Accion`, único), `Descripcion NVARCHAR(500)`, **EsAdministracion** BIT, Activo | UNIQUE(ModuloId, AccionId) |
 
-Todo módulo con permisos DEBE tener su permiso de consulta (FR-020a).
+- Todo módulo con permisos DEBE tener su permiso de consulta (FR-020a).
+- **Edición** (FR-038): el Super Administrador edita `Nombre`, `Descripcion` y `Orden`, y activa
+  o desactiva módulos y permisos.
+  - `Codigo`, `EsConsulta` y `EsAdministracion` **no se editan**: el código del sistema depende
+    de ellos.
+  - Los permisos nuevos solo se crean con el script de cada módulo.
+- **Desactivación**:
+  - Un permiso o módulo inactivo no aparece en la matriz ni suma permisos efectivos, ni siquiera
+    con `EsAccesoTotal`.
+  - Las asignaciones existentes se conservan.
+  - No se puede desactivar el permiso de consulta de un módulo mientras haya otra acción activa
+    en él (error 50008).
+  - No se puede desactivar un permiso con `EsAdministracion` (error 50008), para no dejar
+    negocios sin administración.
 
 ### PlantillasRol / PlantillaRolPermisos (global, sembrado)
 
@@ -186,8 +210,10 @@ Pendiente --desactivar--> Inactivo (sigue sin contraseña)
 | UsuarioRoles | NegocioId, UsuarioId, RolId | PK(UsuarioId, RolId). El rol y el usuario pertenecen al mismo NegocioId |
 
 **Permisos efectivos** (FR-021):
-- Si el usuario tiene algún rol **activo** con `EsAccesoTotal`, son todo el catálogo.
-- Si no, son la unión de `RolPermisos` de sus roles activos.
+- Si el usuario tiene algún rol **activo** con `EsAccesoTotal`, son todos los permisos
+  **activos** del catálogo (de módulos activos).
+- Si no, son la unión de `RolPermisos` de sus roles activos, filtrada a los permisos y módulos
+  activos.
 
 ### Archivos (RLS)
 
@@ -207,7 +233,7 @@ Pendiente --desactivar--> Inactivo (sigue sin contraseña)
 | NegocioId | NULL en eventos de plataforma o con correo sin cuenta |
 | FechaUtc | |
 | AutorId, AutorTipo, AutorNombre | AutorNombre es una copia del nombre en el momento del evento |
-| Entidad | `Negocio`, `Usuario`, `Rol`, `RolPermisos`, `UsuarioRoles`, `ConfiguracionSeguridad`, `PlantillaRol`, `PlantillaCorreo`, `SuperAdministrador` o `Sesion` |
+| Entidad | `Negocio`, `Usuario`, `Rol`, `RolPermisos`, `UsuarioRoles`, `ConfiguracionSeguridad`, `PlantillaRol`, `PlantillaCorreo`, `SuperAdministrador`, `Sesion`, `Modulo` o `Permiso` |
 | EntidadId | |
 | Accion | `Crear`, `Modificar`, `Activar`, `Desactivar`, `AsignarPermisos`, `AsignarRoles`, `InicioSesion`, `InicioSesionFallido`, `Bloqueo`, `CambioContrasena`, `RecuperacionContrasena`, `AccesoDenegado`, `EntradaSoporte`, `SalidaSoporte` o `ReenvioInvitacion` |
 | Cambios | NVARCHAR(MAX) JSON `[{"campo","anterior","nuevo"}]`. Nunca contiene hashes, tokens ni contraseñas |

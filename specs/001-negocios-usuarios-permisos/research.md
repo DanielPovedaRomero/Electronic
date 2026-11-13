@@ -179,8 +179,16 @@ Cada decisión resuelve una incógnita del contexto técnico y respeta la consti
   | Roles | Ver, Crear, Editar, CambiarEstado | Ver, Editar |
   | Auditoria | Ver | — |
 
-  - Las funciones de plataforma (negocios, configuración, plantillas y Super Administradores)
-    no son permisos de catálogo: son exclusivas del ámbito `Plataforma`.
+  - Las funciones de plataforma (negocios, configuración, plantillas, catálogo de permisos y
+    Super Administradores) no son permisos de catálogo: son exclusivas del ámbito `Plataforma`.
+  - **Catálogo editable** (Principio IX, decisión del 2026-11-12, FR-038):
+    - el Super Administrador edita nombres, descripciones y orden, y activa o desactiva módulos
+      y permisos;
+    - los códigos y las banderas `EsConsulta` y `EsAdministracion` son inmutables, porque el
+      código del sistema los referencia;
+    - los permisos nuevos solo llegan por el script de cada módulo, porque un permiso sin
+      código que lo use no tendría efecto;
+    - la desactivación respeta FR-020a y FR-010 (error 50008).
   - En C#, los códigos de permiso son constantes técnicas (`CodigosPermiso.UsuariosCrear`),
     que es el mecanismo de `Codigo` que autoriza el Principio IX.
 - **Rationale**: banderas en vez de textos fijos, como exige el Principio IX.
@@ -189,8 +197,9 @@ Cada decisión resuelve una incógnita del contexto técnico y respeta la consti
 
 - **Decision**: catálogo global `PlantillasRol` + `PlantillaRolPermisos`, sembrado con:
   - Administrador (`EsAccesoTotal = 1`);
-  - Recepción, Técnico y Bodega (`Usuarios.Ver` como permiso inicial y sin permisos
-    administrativos).
+  - Recepción, Técnico y Bodega **sin permisos** (decisión del 2026-11-12). Los módulos futuros
+    (órdenes, inventario, etc.) les agregan permisos en sus propios scripts de semilla.
+    Mientras tanto, un usuario con solo esos roles entra y ve únicamente su perfil.
 
   `usp_Negocios_Crear` copia la plantilla al negocio nuevo en la misma transacción. El Super
   Administrador puede editar la plantilla, y los cambios solo afectan a los negocios que se
@@ -291,6 +300,19 @@ Cada decisión resuelve una incógnita del contexto técnico y respeta la consti
   - **Fuera de este módulo** (decisión del 2026-11-11), en una funcionalidad de deuda técnica
     aparte: agregar SQL Server al CI y eliminar el proyecto vacío `Electronic.Tests`.
   - **Cobertura**: ≥ 80% en Domain y Application, medida con coverlet.
+  - **Autorización completa (SC-003)**: una prueba por reflexión en
+    `Electronic.Infrastructure.Tests/Web/` recorre todas las acciones de los controladores de
+    `Electronic.Web` y falla si alguna no tiene `[RequierePermiso]`, `[SoloPlataforma]` o
+    `[AllowAnonymous]`. No necesita SQL, así que corre en el CI. Se ubica ahí para no crear un
+    tercer proyecto de pruebas.
+  - **Rendimiento**: pruebas `[RequiereSqlFact]` en `Electronic.Infrastructure.Tests/Rendimiento/`,
+    con 50 usuarios y 10 000 filas de auditoría sembradas:
+    - `usp_Sesiones_Validar` en < 50 ms (p95 de 100 ejecuciones);
+    - `usp_Usuarios_Listar` y `usp_Auditoria_Listar` en < 200 ms.
+
+    Esto deja margen para la meta de página p95 < 500 ms.
+  - **Hasta que el CI tenga SQL Server** (decisión del 2026-11-12): cada PR de este módulo adjunta
+    la salida de `dotnet test Electronic.Infrastructure.Tests` ejecutada con `PRUEBAS_SQL`.
 - **Alternatives considered**: Testcontainers, rechazado porque es un NuGet que requiere
   enmienda y el contenedor de servicio de GitHub Actions basta cuando se agregue.
 

@@ -153,7 +153,7 @@ Electronic.Infraestructure/                            # proyecto Electronic.Inf
 │       ├── 0005_rls.sql
 │       ├── 0006_semilla_catalogo_permisos.sql
 │       ├── 0007_semilla_configuracion_plantillas.sql
-│       └── 0008…0015_usp_<modulo>.sql                 # CREATE OR ALTER por módulo
+│       └── 0008…0014_usp_<modulo>.sql                 # CREATE OR ALTER por módulo
 └── DependencyInjection.cs
 
 Electronic.Web/
@@ -192,7 +192,9 @@ constitución.
 |---|---|---|
 | `TreatWarningsAsErrors` y `.editorconfig` no se activan (IV) | Activarlos rompe la compilación por las advertencias heredadas de `ProductService`. El dueño decidió corregirlo en una funcionalidad de deuda técnica aparte | Activarlos aquí mezcla la corrección de Product con este módulo. Mientras tanto, la revisión del PR exige cero advertencias nuevas (R18) |
 | `wwwroot/lib` (Bootstrap y jQuery) sigue en el repositorio (III) | Ninguna vista nueva lo usa. Borrarlo se agrupa con el resto de la deuda técnica | Borrarlo aquí amplía el PR con limpieza no relacionada |
-| Pruebas de integración fuera del CI (VIII) | Agregar SQL Server al CI va en la funcionalidad de deuda técnica. Mientras tanto, las pruebas se omiten sin `PRUEBAS_SQL` y se corren en local antes de cada PR | Hacerlas obligatorias hoy rompería el CI, que no tiene SQL Server |
+| El catálogo de permisos se edita pero no se **crea** desde el sistema (IX, FR-038) | Un permiso solo tiene efecto si el código lo usa (`[RequierePermiso]`), así que cada módulo lo agrega por script al construirse. El Super Administrador edita nombres, descripciones y orden, y activa o desactiva | Permitir crear permisos desde la pantalla generaría permisos sin efecto, que confunden la matriz |
+| `Electronic.Infrastructure.Tests` referencia `Electronic.Web` | La prueba por reflexión de SC-003 necesita los controladores Web, y corre sin SQL en el CI | Un tercer proyecto de pruebas solo para una prueba |
+| Pruebas de integración fuera del CI (VIII) | Agregar SQL Server al CI va en la funcionalidad de deuda técnica. Mientras tanto, las pruebas se omiten sin `PRUEBAS_SQL` y se corren en local antes de cada PR | Hacerlas obligatorias hoy rompería el CI, que no tiene SQL Server. Mitigación: cada PR adjunta la salida de esas pruebas con `PRUEBAS_SQL` |
 | Proyecto nuevo `Electronic.Infrastructure.Tests` | El Principio VIII exige pruebas de integración contra SQL Server y de aislamiento | Mezclarlas con las unitarias obligaría a tener SQL Server para cualquier `dotnet test` |
 | `FrameworkReference Microsoft.AspNetCore.App` en Infrastructure | `PasswordHasher` e `IMemoryCache` están en el framework compartido. No es NuGet | Implementar PBKDF2 a mano crea un formato propio y es fácil equivocarse |
 | Los controladores Web no devuelven `StatusCode(response.Code, response)` | Son MVC: traducen `ApiResponse<T>` a vista + `ModelState`. La convención es de los controladores del API | Devolver JSON desde Web obligaría a llamar desde JavaScript, lo que prohíbe el Principio III |

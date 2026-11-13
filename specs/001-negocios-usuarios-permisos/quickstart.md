@@ -54,8 +54,8 @@ Al iniciar, DbUp aplica los scripts y, si no hay ningún Super Administrador, in
 | 4 | Crear "Taller B" con el NIT de "Taller A" | Rechazo: NIT duplicado | FR-003 |
 | 5 | El administrador de A define su contraseña e inicia sesión | Ve los menús Usuarios, Roles y Auditoría | US2 |
 | 6 | Crear el rol "Cajero" y marcar `Usuarios.Crear` | La matriz marca `Usuarios.Ver` sola. Al guardar, el rol queda con los 2 permisos | FR-020a |
-| 7 | Crear un usuario Técnico; iniciar sesión con él; abrir `/usuarios` | El menú no muestra Usuarios. La URL directa da "Acceso denegado", auditado | US5, FR-023 |
-| 8 | Con el Técnico en sesión, el administrador le quita el rol | En la siguiente acción, el Técnico pierde las opciones, sin volver a entrar | FR-022 |
+| 7 | Crear un usuario solo con el rol Técnico (sin permisos); iniciar sesión con él; abrir `/usuarios` | Entra a su perfil. El menú no muestra Usuarios. La URL directa da "Acceso denegado", auditado | US5, FR-023 |
+| 8 | Con un usuario "Cajero" (escenario 6) en sesión, el administrador le quita `Usuarios.Crear` al rol | En la siguiente acción, el usuario pierde esa opción, sin volver a entrar | FR-022 |
 | 9 | Fallar la contraseña 5 veces con un correo que existe en A y en B | Las cuentas de A y B quedan bloqueadas 15 minutos | FR-014 |
 | 10 | Un usuario de A pide `/usuarios/{id}/editar` con un Id de B | 404 | FR-025 |
 | 11 | El administrador de A intenta desactivarse a sí mismo o quitar el último rol administrativo | Rechazo: el negocio no puede quedar sin administración | FR-008a, FR-010 |
@@ -63,6 +63,7 @@ Al iniciar, DbUp aplica los scripts y, si no hay ningún Super Administrador, in
 | 13 | El Super Administrador entra a soporte en A, cambia un teléfono y sale | Se ve el aviso de soporte. La auditoría de A muestra entrada, cambio y salida con su identidad | FR-026a/b |
 | 14 | Desactivar "Taller A" con usuarios en sesión | Pierden el acceso en la siguiente acción y no pueden volver a entrar | FR-005 |
 | 15 | Consultar la auditoría de A | Autor, fecha, valor anterior y nuevo; nunca contraseñas | US6, FR-028–031 |
+| 16 | Como Super Administrador, renombrar el permiso `Roles.Editar` y desactivar `Roles.CambiarEstado`. Intentar desactivar `Usuarios.Ver` | En la matriz de A aparece el nombre nuevo y `Roles.CambiarEstado` desaparece. Desactivar `Usuarios.Ver` se rechaza (50008) | FR-038 |
 
 ## Verificación de aislamiento en la base de datos
 
